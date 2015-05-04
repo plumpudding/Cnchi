@@ -150,28 +150,25 @@ class MainWindow(Gtk.ApplicationWindow):
         atk_set_image_description(self.forward_button, _("Next step"))
         atk_set_image_description(self.backwards_button, _("Previous step"))
 
-        # image1 = Gtk.Image.new_from_icon_name("go-next", Gtk.IconSize.LARGE_TOOLBAR)
-        # self.forward_button.set_label("")
-        # self.forward_button.set_image(image1)
         self.forward_button.set_name('fwd_btn')
         self.forward_button.set_always_show_image(True)
-        # self.forward_button.add(Gtk.Arrow(Gtk.ArrowType.RIGHT, Gtk.ShadowType.NONE))
 
-        # image2 = Gtk.Image.new_from_icon_name("go-previous", Gtk.IconSize.LARGE_TOOLBAR)
-        # self.backwards_button.set_label("")
-        # self.backwards_button.set_image(image2)
         self.backwards_button.set_name('bk_btn')
         self.backwards_button.set_always_show_image(True)
-        # self.backwards_button.add(Gtk.Arrow(Gtk.ArrowType.LEFT, Gtk.ShadowType.NONE))
 
         # Create a queue. Will be used to report pacman messages (pacman/pac.py)
         # to the main thread (installation/process.py)
         self.callback_queue = multiprocessing.JoinableQueue()
 
-        # Save in config if we have to use aria2 to download pacman packages
-        self.settings.set("use_aria2", cmd_line.aria2)
-        if cmd_line.aria2:
-            logging.info(_("Using Aria2 to download packages - EXPERIMENTAL"))
+        # Save in config which download method we have to use
+        if cmd_line.library:
+            self.settings.set("download_library", cmd_line.library)
+        else:
+            # Use urllib by default
+            self.settings.set("download_library", 'urllib')
+        logging.info(
+            _("Using %s to download packages"),
+            self.settings.get("download_library"))
 
         self.set_titlebar(self.header)
 

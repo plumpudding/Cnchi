@@ -36,7 +36,7 @@ import locale
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GObject
+from gi.repository import Gio, Gtk, GObject
 
 import misc.misc as misc
 import info
@@ -54,7 +54,9 @@ class CnchiApp(Gtk.Application):
 
     def __init__(self):
         """ Constructor. Call base class """
-        Gtk.Application.__init__(self)
+        Gtk.Application.__init__(self,
+            application_id="com.antergos.cnchi",
+            flags=Gio.ApplicationFlags.FLAGS_NONE)
 
     def do_activate(self):
         """ Override the 'activate' signal of GLib.Application. """
@@ -65,12 +67,9 @@ class CnchiApp(Gtk.Application):
             logging.error(msg)
             sys.exit(1)
 
-        # window = main_window.MainWindow(self, cmd_line)
-        main_window.MainWindow(self, cmd_line)
-
-        # Some tutorials show that this line is needed, some don't
-        # It seems to work ok without
-        # self.add_window(window)
+        window = main_window.MainWindow(self, cmd_line)
+        self.add_window(window)
+        window.show()
 
         # This is unnecessary as show_all is called in MainWindow
         # window.show_all()
@@ -146,7 +145,7 @@ def check_gtk_version():
         wrong_gtk_version = True
 
     if wrong_gtk_version:
-        text = "Detected GTK version {0}.{1}.{2} but version {3} is needed."
+        text = "Detected GTK version {0}.{1}.{2} but version>={3} is needed."
         text = text.format(major, minor, micro, GTK_VERSION_NEEDED)
         logging.info(text)
         return False
@@ -180,10 +179,6 @@ def parse_options():
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument(
-        "-a", "--aria2",
-        help=_("Use aria2 to download Antergos packages (EXPERIMENTAL)"),
-        action="store_true")
-    parser.add_argument(
         "-c", "--cache",
         help=_("Use pre-downloaded xz packages when possible"),
         nargs='?')
@@ -199,6 +194,11 @@ def parse_options():
         "-i", "--disable-tryit",
         help=_("Disables first screen's 'try it' option"),
         action="store_true")
+    parser.add_argument(
+        "-l", "--library",
+        help=_("Choose which library to use when downloading packages."
+        " Possible options are 'urllib' (default), 'requests' and 'aria2'"),
+        nargs='?')
     parser.add_argument(
         "-n", "--no-check",
         help=_("Makes checks optional in check screen"),

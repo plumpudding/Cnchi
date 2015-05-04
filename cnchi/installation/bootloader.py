@@ -53,11 +53,11 @@ class Bootloader(object):
         self.method = settings.get("partition_mode")
         self.root_device = self.mount_devices["/"]
         self.root_uuid = fs.get_info(self.root_device)['UUID']
-        
+
         if "swap" in self.mount_devices:
             swap_partition = self.mount_devices["swap"]
             self.swap_uuid = fs.get_info(swap_partition)['UUID']
-        
+
         if "/boot" in self.mount_devices:
             boot_device = self.mount_devices["/boot"]
             self.boot_uuid = fs.get_info(boot_device)['UUID']
@@ -95,15 +95,15 @@ class Bootloader(object):
             return
 
         ruuid_str = 'root=UUID={0}'.format(self.root_uuid)
-        
+
         cmdline_linux = self.settings.get('GRUB_CMDLINE_LINUX')
         if cmdline_linux is None:
             cmdline_linux = ""
-        
+
         cmdline_linux_default = self.settings.get('GRUB_CMDLINE_LINUX_DEFAULT')
         if cmdline_linux_default is None:
             cmdline_linux_default = ""
-        
+
         boot_command = 'linux /vmlinuz-linux {0} {1} {2}\n'.format(ruuid_str, cmdline_linux, cmdline_linux_default)
 
         pattern = re.compile("menuentry 'Antergos Linux'[\s\S]*initramfs-linux.img\n}")
@@ -234,10 +234,13 @@ class Bootloader(object):
         # We call mount_special_dirs here just to be sure
         chroot.mount_special_dirs(self.dest_dir)
 
-        grub_install = ['grub-install', '--directory=/usr/lib/grub/i386-pc', '--target=i386-pc',
-                        '--boot-directory=/boot', '--recheck']
+        grub_install = ['grub-install',
+                        '--directory=/usr/lib/grub/i386-pc',
+                        '--target=i386-pc',
+                        '--boot-directory=/boot',
+                        '--recheck']
 
-        if len(grub_location) > len("/dev/sdX"):  # ex: /dev/sdXY > 8
+        if len(grub_location) > len("/dev/sdX"):  # Use --force when installing in /dev/sdXY
             grub_install.append("--force")
 
         grub_install.append(grub_location)
@@ -259,6 +262,7 @@ class Bootloader(object):
         self.apply_osprober_patch()
 
         # Run grub-mkconfig last
+        logging.debug(_("Running grub-mkconfig..."))
         locale = self.settings.get("locale")
         try:
             cmd = ['sh', '-c', 'LANG={0} grub-mkconfig -o /boot/grub/grub.cfg'.format(locale)]
@@ -364,6 +368,7 @@ class Bootloader(object):
         # Add -l option to os-prober's umount call so that it does not hang
         self.apply_osprober_patch()
 
+        logging.debug(_("Running grub-mkconfig..."))
         locale = self.settings.get("locale")
         try:
             cmd = ['sh', '-c', 'LANG={0} grub-mkconfig -o /boot/grub/grub.cfg'.format(locale)]
@@ -538,7 +543,7 @@ class Bootloader(object):
                     entry_file.write(line)
 
         # Install bootloader
-
+        logging.debug(_("Installing gummiboot bootloader..."))
         try:
             chroot.mount_special_dirs(self.dest_dir)
             cmd = ['gummiboot', '--path=/boot', 'install']
