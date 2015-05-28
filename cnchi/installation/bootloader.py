@@ -452,25 +452,23 @@ class Bootloader(object):
         # Setup boot entries
         conf = {}
 
-        if self.settings.get('use_luks'):
+        if not self.settings.get('use_luks'):
+            root_uuid_line = "root=UUID={0} rw quiet".format(self.root_uuid)
+        else:
             luks_root_volume = self.settings.get('luks_root_volume')
             luks_root_volume_uuid = fs.get_info(luks_root_volume)['UUID']
 
             # In automatic mode, root_device is in self.mount_devices, as it should be
-            root_device = self.root_device
+            #fs.get_info(self.root_device)['UUID']
 
-            if self.method == "advanced" and self.settings.get('use_luks_in_root'):
-                root_device = self.settings.get('luks_root_device')
-
-            root_uuid = fs.get_info(root_device)['UUID']
+            #if self.method == "advanced" and self.settings.get('use_luks_in_root'):
+            root_uuid = fs.get_info(self.settings.get('luks_root_device'))['UUID']
 
             key = ""
             if self.settings.get("luks_root_password") == "":
                 key = "cryptkey=UUID={0}:ext2:/.keyfile-root".format(self.boot_uuid)
 
             root_uuid_line = "cryptdevice=UUID={0}:{1} {2} root=UUID={3} rw quiet".format(root_uuid, luks_root_volume, key, luks_root_volume_uuid)
-        else:
-            root_uuid_line = "root=UUID={0} rw quiet".format(self.root_uuid)
 
         conf['default'] = []
         conf['default'].append("title\tAntergos\n")
